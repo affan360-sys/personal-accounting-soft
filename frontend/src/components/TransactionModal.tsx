@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { X, ArrowDownRight, ArrowUpRight, ArrowLeftRight, ArrowDownLeft, TrendingUp } from 'lucide-react';
-import { Account, Category } from '../types';
+import { Account, Category, Transaction } from '../types';
 import { useCurrency } from '../context/CurrencyContext';
 
 interface TransactionModalProps {
@@ -9,6 +9,7 @@ interface TransactionModalProps {
   onSave: (data: any) => Promise<void>;
   accounts: Account[];
   categories: Category[];
+  transactions?: Transaction[];
 }
 
 export const TransactionModal: React.FC<TransactionModalProps> = ({
@@ -17,6 +18,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
   onSave,
   accounts,
   categories,
+  transactions = [],
 }) => {
   const { currency } = useCurrency();
   const [type, setType] = useState<'expense' | 'income' | 'transfer' | 'receivable' | 'payable' | 'invest'>('expense');
@@ -34,6 +36,52 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
   const [affectAccount, setAffectAccount] = useState<boolean>(true);
   const [notes, setNotes] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
+
+  // Suggestions derived from past transaction history and localStorage
+  const suggestedInvestmentNames = useMemo(() => {
+    const list: string[] = [];
+    const seen = new Set<string>();
+
+    const addName = (name?: string) => {
+      if (!name) return;
+      const clean = name.trim();
+      if (clean && !seen.has(clean.toLowerCase())) {
+        seen.add(clean.toLowerCase());
+        list.push(clean);
+      }
+    };
+
+    // 1. From localStorage history
+    try {
+      const stored = JSON.parse(localStorage.getItem('affan_investment_history') || '[]');
+      if (Array.isArray(stored)) {
+        stored.forEach(addName);
+      }
+    } catch {}
+
+    // 2. Extract from transactions history
+    if (transactions && Array.isArray(transactions)) {
+      transactions.forEach((t) => {
+        if (!t.payee) return;
+        // Match [Invest: AssetType] Name
+        const match = t.payee.match(/^\[Invest:[^\]]+\]\s*(.+)$/i);
+        if (match && match[1]) {
+          addName(match[1]);
+        } else if (
+          t.category_name?.toLowerCase().includes('invest') ||
+          t.category_name?.toLowerCase().includes('capital')
+        ) {
+          const stripped = t.payee.replace(/^\[[^\]]+\]\s*/, '');
+          addName(stripped);
+        }
+      });
+    }
+
+    // 3. Fallback defaults
+    ['Pulsecode Equity', 'Startup Equity', 'BRAC Bank DPS', 'Beximco Shares', 'Gold Asset'].forEach(addName);
+
+    return list;
+  }, [transactions]);
 
   useEffect(() => {
     if (accounts && accounts.length > 0) {
@@ -82,6 +130,13 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
           notes: notes.trim() || undefined,
         });
       } else if (type === 'invest') {
+        if (assetName.trim()) {
+          try {
+            const stored: string[] = JSON.parse(localStorage.getItem('affan_investment_history') || '[]');
+            const updated = [assetName.trim(), ...stored.filter((s) => s.toLowerCase() !== assetName.trim().toLowerCase())].slice(0, 30);
+            localStorage.setItem('affan_investment_history', JSON.stringify(updated));
+          } catch {}
+        }
         await onSave({
           type,
           amount: parseFloat(amount),
@@ -474,17 +529,50 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-purple-900 uppercase tracking-wider mb-1">
-                  Investment Name / Asset
-                </label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-semibold text-purple-900 uppercase tracking-wider">
+                    Investment Name / Asset
+                  </label>
+                  {suggestedInvestmentNames.length > 0 && (
+                    <span className="text-[11px] text-purple-600 font-medium">
+                      Select or type below
+                    </span>
+                  )}
+                </div>
                 <input
                   type="text"
                   required
+                  list="investment-history-list"
                   placeholder="e.g. Beximco Shares, BRAC Bank DPS, Startup Equity, Gold Sovereign"
                   value={assetName}
                   onChange={(e) => setAssetName(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm bg-white"
+                  className="w-full px-3.5 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm bg-white text-slate-800"
                 />
+                <datalist id="investment-history-list">
+                  {suggestedInvestmentNames.map((name) => (
+                    <option key={name} value={name} />
+                  ))}
+                </datalist>
+
+                {suggestedInvestmentNames.length > 0 && (
+                  <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                    <span className="text-[11px] font-semibold text-purple-700">From history:</span>
+                    {suggestedInvestmentNames.slice(0, 6).map((name) => (
+                      <button
+                        key={name}
+                        type="button"
+                        onClick={() => setAssetName(name)}
+                        className={`text-xs px-2.5 py-0.5 rounded-md transition-all font-medium border ${
+                          assetName.toLowerCase() === name.toLowerCase()
+                            ? 'bg-purple-600 text-white border-purple-600 shadow-xs'
+                            : 'bg-white hover:bg-purple-100 text-purple-900 border-purple-200'
+                        }`}
+                      >
+                        + {name}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="flex items-center space-x-2 pt-1">

@@ -387,6 +387,7 @@ function MainApp() {
         onSave={handleSaveTransaction}
         accounts={accounts}
         categories={categories}
+        transactions={transactions}
       />
 
       {/* Mobile-Style 10:00 PM Push Notification Banner */}
