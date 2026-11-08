@@ -515,6 +515,7 @@ router.post('/debts', (req, res) => {
       counterparty = '',
       total_amount,
       paid_amount = 0.0,
+      loan_date = null,
       due_date = null,
       interest_rate = 0.0,
       notes = '',
@@ -522,14 +523,15 @@ router.post('/debts', (req, res) => {
     } = req.body;
 
     const result = db.prepare(`
-      INSERT INTO debt_goals (title, type, counterparty, total_amount, paid_amount, due_date, interest_rate, notes, status)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO debt_goals (title, type, counterparty, total_amount, paid_amount, loan_date, due_date, interest_rate, notes, status)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       title,
       type,
       counterparty,
       Number(total_amount),
       Number(paid_amount) || 0.0,
+      loan_date,
       due_date,
       Number(interest_rate) || 0.0,
       notes,
@@ -557,6 +559,7 @@ router.put('/debts/:id', (req, res) => {
       counterparty = existing.counterparty,
       total_amount = existing.total_amount,
       paid_amount = existing.paid_amount,
+      loan_date = existing.loan_date,
       due_date = existing.due_date,
       interest_rate = existing.interest_rate,
       notes = existing.notes,
@@ -569,7 +572,7 @@ router.put('/debts/:id', (req, res) => {
 
     db.prepare(`
       UPDATE debt_goals
-      SET title = ?, type = ?, counterparty = ?, total_amount = ?, paid_amount = ?, due_date = ?, interest_rate = ?, notes = ?, status = ?
+      SET title = ?, type = ?, counterparty = ?, total_amount = ?, paid_amount = ?, loan_date = ?, due_date = ?, interest_rate = ?, notes = ?, status = ?
       WHERE id = ?
     `).run(
       title,
@@ -577,6 +580,7 @@ router.put('/debts/:id', (req, res) => {
       counterparty,
       newTotal,
       newPaid,
+      loan_date,
       due_date,
       Number(interest_rate),
       notes,

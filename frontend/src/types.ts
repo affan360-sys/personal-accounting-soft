@@ -54,6 +54,7 @@ export interface DebtGoal {
   counterparty?: string;
   total_amount: number;
   paid_amount: number;
+  loan_date?: string;
   due_date?: string;
   interest_rate: number;
   notes?: string;

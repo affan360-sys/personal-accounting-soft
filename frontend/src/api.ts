@@ -87,8 +87,8 @@ export const INITIAL_TRANSACTIONS: Transaction[] = [
 ];
 
 export const INITIAL_DEBTS: DebtGoal[] = [
-  { id: 1, title: 'Loan to Pulsecode', type: 'they_owe_me', counterparty: 'Pulsecode', total_amount: 1500, paid_amount: 0, due_date: '2026-12-31', interest_rate: 0, notes: 'Give loan (Initial 1500 TK)', status: 'active', created_at: '2026-09-15T00:00:00.000Z' },
-  { id: 2, title: 'Loan to Rifat', type: 'they_owe_me', counterparty: 'Rifat', total_amount: 2500, paid_amount: 0, due_date: '2026-12-31', interest_rate: 0, notes: 'Taka out (2000 + 500 TK on 26/10/26)', status: 'active', created_at: '2026-10-20T00:00:00.000Z' },
+  { id: 1, title: 'Loan to Pulsecode', type: 'they_owe_me', counterparty: 'Pulsecode', total_amount: 1500, paid_amount: 0, loan_date: '2026-09-15', due_date: '2026-12-31', interest_rate: 0, notes: 'Give loan (Initial 1500 TK)', status: 'active', created_at: '2026-09-15T00:00:00.000Z' },
+  { id: 2, title: 'Loan to Rifat', type: 'they_owe_me', counterparty: 'Rifat', total_amount: 2500, paid_amount: 0, loan_date: '2026-10-20', due_date: '2026-12-31', interest_rate: 0, notes: 'Taka out (2000 + 500 TK on 26/10/26)', status: 'active', created_at: '2026-10-20T00:00:00.000Z' },
 ];
 
 // --- Local Storage Helpers ---
@@ -610,6 +610,7 @@ export async function createDebt(data: Partial<DebtGoal>): Promise<DebtGoal> {
     counterparty: data.counterparty || '',
     total_amount: Number(data.total_amount) || 0,
     paid_amount: Number(data.paid_amount) || 0,
+    loan_date: data.loan_date || new Date().toISOString().split('T')[0],
     due_date: data.due_date,
     interest_rate: Number(data.interest_rate) || 0,
     notes: data.notes || '',

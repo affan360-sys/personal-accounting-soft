@@ -26,6 +26,7 @@ export const DebtsView: React.FC<DebtsViewProps> = ({
   const [counterparty, setCounterparty] = useState('');
   const [totalAmount, setTotalAmount] = useState('');
   const [paidAmount, setPaidAmount] = useState('0');
+  const [loanDate, setLoanDate] = useState('');
   const [dueDate, setDueDate] = useState('');
   const [interestRate, setInterestRate] = useState('0');
   const [notes, setNotes] = useState('');
@@ -37,6 +38,7 @@ export const DebtsView: React.FC<DebtsViewProps> = ({
   const [editCounterparty, setEditCounterparty] = useState('');
   const [editTotalAmount, setEditTotalAmount] = useState('');
   const [editPaidAmount, setEditPaidAmount] = useState('0');
+  const [editLoanDate, setEditLoanDate] = useState('');
   const [editDueDate, setEditDueDate] = useState('');
   const [editInterestRate, setEditInterestRate] = useState('0');
   const [editNotes, setEditNotes] = useState('');
@@ -54,6 +56,7 @@ export const DebtsView: React.FC<DebtsViewProps> = ({
     setCounterparty('');
     setTotalAmount('');
     setPaidAmount('0');
+    setLoanDate(new Date().toISOString().split('T')[0]);
     setDueDate('');
     setInterestRate('0');
     setNotes('');
@@ -70,6 +73,7 @@ export const DebtsView: React.FC<DebtsViewProps> = ({
       counterparty: counterparty.trim() || undefined,
       total_amount: parseFloat(totalAmount),
       paid_amount: parseFloat(paidAmount) || 0,
+      loan_date: loanDate || undefined,
       due_date: dueDate || undefined,
       interest_rate: parseFloat(interestRate) || 0,
       notes: notes.trim() || undefined,
@@ -99,6 +103,7 @@ export const DebtsView: React.FC<DebtsViewProps> = ({
     setEditCounterparty(d.counterparty || '');
     setEditTotalAmount(String(d.total_amount ?? ''));
     setEditPaidAmount(String(d.paid_amount ?? '0'));
+    setEditLoanDate(d.loan_date || d.created_at?.split('T')[0] || new Date().toISOString().split('T')[0]);
     setEditDueDate(d.due_date || '');
     setEditInterestRate(String(d.interest_rate ?? '0'));
     setEditNotes(d.notes || '');
@@ -119,6 +124,7 @@ export const DebtsView: React.FC<DebtsViewProps> = ({
       counterparty: editCounterparty.trim() || undefined,
       total_amount: total,
       paid_amount: paid,
+      loan_date: editLoanDate || undefined,
       due_date: editDueDate || undefined,
       interest_rate: parseFloat(editInterestRate) || 0,
       notes: editNotes.trim() || undefined,
@@ -201,6 +207,9 @@ export const DebtsView: React.FC<DebtsViewProps> = ({
                         <CheckCircle2 className="w-3.5 h-3.5" />
                         <span>Fully Settled</span>
                       </span>
+                    )}
+                    {d.loan_date && (
+                      <span className="text-xs text-slate-500 font-medium">Loan Date: {d.loan_date}</span>
                     )}
                     {d.due_date && (
                       <span className="text-xs text-slate-400">Due: {d.due_date}</span>
@@ -420,6 +429,32 @@ export const DebtsView: React.FC<DebtsViewProps> = ({
                 </div>
               </div>
 
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
+                    Loan Date
+                  </label>
+                  <input
+                    type="date"
+                    required
+                    value={loanDate}
+                    onChange={(e) => setLoanDate(e.target.value)}
+                    className="w-full px-3.5 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
+                    Due Date (Optional)
+                  </label>
+                  <input
+                    type="date"
+                    value={dueDate}
+                    onChange={(e) => setDueDate(e.target.value)}
+                    className="w-full px-3.5 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  />
+                </div>
+              </div>
+
               <div>
                 <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
                   Notes
@@ -549,6 +584,18 @@ export const DebtsView: React.FC<DebtsViewProps> = ({
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
+                    Loan Date
+                  </label>
+                  <input
+                    type="date"
+                    required
+                    value={editLoanDate}
+                    onChange={(e) => setEditLoanDate(e.target.value)}
+                    className="w-full px-3.5 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
                     Due Date (Optional)
                   </label>
                   <input
@@ -558,19 +605,20 @@ export const DebtsView: React.FC<DebtsViewProps> = ({
                     className="w-full px-3.5 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                   />
                 </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
-                    Status
-                  </label>
-                  <select
-                    value={editStatus}
-                    onChange={(e) => setEditStatus(e.target.value as 'active' | 'completed')}
-                    className="w-full px-3.5 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white"
-                  >
-                    <option value="active">Active</option>
-                    <option value="completed">Completed / Settled</option>
-                  </select>
-                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
+                  Status
+                </label>
+                <select
+                  value={editStatus}
+                  onChange={(e) => setEditStatus(e.target.value as 'active' | 'completed')}
+                  className="w-full px-3.5 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white"
+                >
+                  <option value="active">Active</option>
+                  <option value="completed">Completed / Settled</option>
+                </select>
               </div>
 
               <div>

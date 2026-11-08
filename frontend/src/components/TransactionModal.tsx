@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { X, ArrowDownRight, ArrowUpRight, ArrowLeftRight, ArrowDownLeft, TrendingUp } from 'lucide-react';
 import { Account, Category, Transaction } from '../types';
@@ -57,7 +58,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
       if (Array.isArray(stored)) {
         stored.forEach(addName);
       }
-    } catch {}
+    } catch { }
 
     // 2. Extract from transactions history
     if (transactions && Array.isArray(transactions)) {
@@ -135,7 +136,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
             const stored: string[] = JSON.parse(localStorage.getItem('affan_investment_history') || '[]');
             const updated = [assetName.trim(), ...stored.filter((s) => s.toLowerCase() !== assetName.trim().toLowerCase())].slice(0, 30);
             localStorage.setItem('affan_investment_history', JSON.stringify(updated));
-          } catch {}
+          } catch { }
         }
         await onSave({
           type,
@@ -159,7 +160,7 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
           notes: notes.trim() || undefined,
         });
       }
-      
+
       // reset & close
       setAmount('');
       setPayee('');
@@ -197,9 +198,8 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
             <button
               type="button"
               onClick={() => { setType('expense'); setCategoryId(''); }}
-              className={`flex items-center justify-center space-x-1 py-2 px-1 rounded-lg text-xs font-bold transition-all ${
-                type === 'expense' ? 'bg-rose-500 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
-              }`}
+              className={`flex items-center justify-center space-x-1 py-2 px-1 rounded-lg text-xs font-bold transition-all ${type === 'expense' ? 'bg-rose-500 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                }`}
             >
               <ArrowDownRight className="w-3.5 h-3.5 shrink-0" />
               <span>Taka Out</span>
@@ -208,9 +208,8 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
             <button
               type="button"
               onClick={() => { setType('income'); setCategoryId(''); }}
-              className={`flex items-center justify-center space-x-1 py-2 px-1 rounded-lg text-xs font-bold transition-all ${
-                type === 'income' ? 'bg-emerald-500 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
-              }`}
+              className={`flex items-center justify-center space-x-1 py-2 px-1 rounded-lg text-xs font-bold transition-all ${type === 'income' ? 'bg-emerald-500 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                }`}
             >
               <ArrowUpRight className="w-3.5 h-3.5 shrink-0" />
               <span>Taka In</span>
@@ -219,9 +218,8 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
             <button
               type="button"
               onClick={() => { setType('transfer'); setCategoryId(''); }}
-              className={`flex items-center justify-center space-x-1 py-2 px-1 rounded-lg text-xs font-bold transition-all ${
-                type === 'transfer' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
-              }`}
+              className={`flex items-center justify-center space-x-1 py-2 px-1 rounded-lg text-xs font-bold transition-all ${type === 'transfer' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                }`}
             >
               <ArrowLeftRight className="w-3.5 h-3.5 shrink-0" />
               <span>Transfer</span>
@@ -230,9 +228,8 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
             <button
               type="button"
               onClick={() => { setType('receivable'); setCategoryId(''); }}
-              className={`flex items-center justify-center space-x-1 py-2 px-1 rounded-lg text-xs font-bold transition-all ${
-                type === 'receivable' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
-              }`}
+              className={`flex items-center justify-center space-x-1 py-2 px-1 rounded-lg text-xs font-bold transition-all ${type === 'receivable' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                }`}
             >
               <ArrowUpRight className="w-3.5 h-3.5 shrink-0" />
               <span>Receivable</span>
@@ -241,9 +238,8 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
             <button
               type="button"
               onClick={() => { setType('payable'); setCategoryId(''); }}
-              className={`flex items-center justify-center space-x-1 py-2 px-1 rounded-lg text-xs font-bold transition-all ${
-                type === 'payable' ? 'bg-amber-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
-              }`}
+              className={`flex items-center justify-center space-x-1 py-2 px-1 rounded-lg text-xs font-bold transition-all ${type === 'payable' ? 'bg-amber-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                }`}
             >
               <ArrowDownLeft className="w-3.5 h-3.5 shrink-0" />
               <span>Payable</span>
@@ -252,9 +248,8 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
             <button
               type="button"
               onClick={() => { setType('invest'); setCategoryId(''); }}
-              className={`flex items-center justify-center space-x-1 py-2 px-1 rounded-lg text-xs font-bold transition-all ${
-                type === 'invest' ? 'bg-purple-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
-              }`}
+              className={`flex items-center justify-center space-x-1 py-2 px-1 rounded-lg text-xs font-bold transition-all ${type === 'invest' ? 'bg-purple-600 text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'
+                }`}
             >
               <TrendingUp className="w-3.5 h-3.5 shrink-0" />
               <span>Invest</span>
@@ -562,11 +557,10 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                         key={name}
                         type="button"
                         onClick={() => setAssetName(name)}
-                        className={`text-xs px-2.5 py-0.5 rounded-md transition-all font-medium border ${
-                          assetName.toLowerCase() === name.toLowerCase()
+                        className={`text-xs px-2.5 py-0.5 rounded-md transition-all font-medium border ${assetName.toLowerCase() === name.toLowerCase()
                             ? 'bg-purple-600 text-white border-purple-600 shadow-xs'
                             : 'bg-white hover:bg-purple-100 text-purple-900 border-purple-200'
-                        }`}
+                          }`}
                       >
                         + {name}
                       </button>
@@ -616,15 +610,14 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
             <button
               type="submit"
               disabled={loading}
-              className={`px-5 py-2 rounded-lg text-sm font-semibold text-white shadow-sm transition-all disabled:opacity-50 ${
-                type === 'receivable'
+              className={`px-5 py-2 rounded-lg text-sm font-semibold text-white shadow-sm transition-all disabled:opacity-50 ${type === 'receivable'
                   ? 'bg-indigo-600 hover:bg-indigo-700'
                   : type === 'payable'
-                  ? 'bg-amber-600 hover:bg-amber-700'
-                  : type === 'invest'
-                  ? 'bg-purple-600 hover:bg-purple-700'
-                  : 'bg-blue-600 hover:bg-blue-700'
-              }`}
+                    ? 'bg-amber-600 hover:bg-amber-700'
+                    : type === 'invest'
+                      ? 'bg-purple-600 hover:bg-purple-700'
+                      : 'bg-blue-600 hover:bg-blue-700'
+                }`}
             >
               {loading ? 'Saving...' : type === 'receivable' ? 'Record Receivable' : type === 'payable' ? 'Record Payable' : type === 'invest' ? 'Record Investment' : 'Record Entry'}
             </button>

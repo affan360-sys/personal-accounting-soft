@@ -71,6 +71,7 @@ function initDatabase() {
       counterparty TEXT,
       total_amount REAL NOT NULL,
       paid_amount REAL DEFAULT 0.0,
+      loan_date TEXT,
       due_date TEXT,
       interest_rate REAL DEFAULT 0.0,
       notes TEXT,
@@ -78,6 +79,12 @@ function initDatabase() {
       created_at TEXT DEFAULT (datetime('now'))
     );
   `);
+
+  try {
+    db.exec('ALTER TABLE debt_goals ADD COLUMN loan_date TEXT');
+  } catch (e) {
+    // Column already exists
+  }
 }
 
 function updateAccountBalance(accountId) {
