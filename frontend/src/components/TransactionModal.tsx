@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, ArrowDownRight, ArrowUpRight, ArrowLeftRight, ArrowDownLeft, TrendingUp } from 'lucide-react';
 import { Account, Category } from '../types';
 import { useCurrency } from '../context/CurrencyContext';
@@ -34,6 +34,17 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
   const [affectAccount, setAffectAccount] = useState<boolean>(true);
   const [notes, setNotes] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (accounts && accounts.length > 0) {
+      if (!accountId || !accounts.some((a) => a.id === accountId)) {
+        setAccountId(accounts[0].id);
+      }
+      if (!toAccountId || !accounts.some((a) => a.id === toAccountId)) {
+        setToAccountId(accounts[1]?.id || accounts[0].id);
+      }
+    }
+  }, [accounts, accountId, toAccountId]);
 
   if (!isOpen) return null;
 
@@ -239,11 +250,15 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                     onChange={(e) => setAccountId(Number(e.target.value))}
                     className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-slate-800 bg-white"
                   >
-                    {accounts.map((acc) => (
-                      <option key={acc.id} value={acc.id}>
-                        {acc.name} ({currency}{acc.current_balance.toFixed(2)})
-                      </option>
-                    ))}
+                    {accounts.length === 0 ? (
+                      <option value="">No accounts available</option>
+                    ) : (
+                      accounts.map((acc) => (
+                        <option key={acc.id} value={acc.id}>
+                          {acc.name} ({currency}{acc.current_balance.toFixed(2)})
+                        </option>
+                      ))
+                    )}
                   </select>
                 </div>
 
@@ -293,11 +308,15 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                   onChange={(e) => setAccountId(Number(e.target.value))}
                   className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-slate-800 bg-white"
                 >
-                  {accounts.map((acc) => (
-                    <option key={acc.id} value={acc.id}>
-                      {acc.name} ({currency}{acc.current_balance.toFixed(2)})
-                    </option>
-                  ))}
+                  {accounts.length === 0 ? (
+                    <option value="">No accounts available</option>
+                  ) : (
+                    accounts.map((acc) => (
+                      <option key={acc.id} value={acc.id}>
+                        {acc.name} ({currency}{acc.current_balance.toFixed(2)})
+                      </option>
+                    ))
+                  )}
                 </select>
               </div>
 
@@ -310,11 +329,15 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                   onChange={(e) => setToAccountId(Number(e.target.value))}
                   className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-slate-800 bg-white"
                 >
-                  {accounts.map((acc) => (
-                    <option key={acc.id} value={acc.id}>
-                      {acc.name} ({currency}{acc.current_balance.toFixed(2)})
-                    </option>
-                  ))}
+                  {accounts.length === 0 ? (
+                    <option value="">No accounts available</option>
+                  ) : (
+                    accounts.map((acc) => (
+                      <option key={acc.id} value={acc.id}>
+                        {acc.name} ({currency}{acc.current_balance.toFixed(2)})
+                      </option>
+                    ))
+                  )}
                 </select>
               </div>
             </div>
@@ -333,11 +356,15 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                     onChange={(e) => setAccountId(Number(e.target.value))}
                     className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-slate-800 bg-white"
                   >
-                    {accounts.map((acc) => (
-                      <option key={acc.id} value={acc.id}>
-                        {acc.name} ({currency}{acc.current_balance.toFixed(2)})
-                      </option>
-                    ))}
+                    {accounts.length === 0 ? (
+                      <option value="">No accounts available</option>
+                    ) : (
+                      accounts.map((acc) => (
+                        <option key={acc.id} value={acc.id}>
+                          {acc.name} ({currency}{acc.current_balance.toFixed(2)})
+                        </option>
+                      ))
+                    )}
                   </select>
                 </div>
 
@@ -413,11 +440,15 @@ export const TransactionModal: React.FC<TransactionModalProps> = ({
                     onChange={(e) => setAccountId(Number(e.target.value))}
                     className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm text-slate-800 bg-white"
                   >
-                    {accounts.map((acc) => (
-                      <option key={acc.id} value={acc.id}>
-                        {acc.name} ({currency}{acc.current_balance.toFixed(2)})
-                      </option>
-                    ))}
+                    {accounts.length === 0 ? (
+                      <option value="">No accounts available</option>
+                    ) : (
+                      accounts.map((acc) => (
+                        <option key={acc.id} value={acc.id}>
+                          {acc.name} ({currency}{acc.current_balance.toFixed(2)})
+                        </option>
+                      ))
+                    )}
                   </select>
                 </div>
 
