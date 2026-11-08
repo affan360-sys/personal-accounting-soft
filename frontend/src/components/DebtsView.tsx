@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, ArrowDownLeft, ArrowUpRight, CheckCircle2, Trash2, X, DollarSign } from 'lucide-react';
+import { Plus, ArrowDownLeft, ArrowUpRight, CheckCircle2, Trash2, X, DollarSign, Pencil } from 'lucide-react';
 import { DebtGoal } from '../types';
 import { useCurrency } from '../context/CurrencyContext';
 
@@ -29,6 +29,18 @@ export const DebtsView: React.FC<DebtsViewProps> = ({
   const [dueDate, setDueDate] = useState('');
   const [interestRate, setInterestRate] = useState('0');
   const [notes, setNotes] = useState('');
+
+  // Edit Debt State
+  const [editingDebt, setEditingDebt] = useState<DebtGoal | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editType, setEditType] = useState<'i_owe' | 'they_owe_me'>('they_owe_me');
+  const [editCounterparty, setEditCounterparty] = useState('');
+  const [editTotalAmount, setEditTotalAmount] = useState('');
+  const [editPaidAmount, setEditPaidAmount] = useState('0');
+  const [editDueDate, setEditDueDate] = useState('');
+  const [editInterestRate, setEditInterestRate] = useState('0');
+  const [editNotes, setEditNotes] = useState('');
+  const [editStatus, setEditStatus] = useState<'active' | 'completed'>('active');
 
   const iOweDebts = debts.filter((d) => d.type === 'i_owe' && d.status === 'active');
   const theyOweDebts = debts.filter((d) => d.type === 'they_owe_me' && d.status === 'active');
@@ -78,6 +90,41 @@ export const DebtsView: React.FC<DebtsViewProps> = ({
     });
     setPaymentModalDebt(null);
     setPaymentAmount('');
+  };
+
+  const handleOpenEdit = (d: DebtGoal) => {
+    setEditingDebt(d);
+    setEditTitle(d.title || '');
+    setEditType(d.type || 'they_owe_me');
+    setEditCounterparty(d.counterparty || '');
+    setEditTotalAmount(String(d.total_amount ?? ''));
+    setEditPaidAmount(String(d.paid_amount ?? '0'));
+    setEditDueDate(d.due_date || '');
+    setEditInterestRate(String(d.interest_rate ?? '0'));
+    setEditNotes(d.notes || '');
+    setEditStatus(d.status || 'active');
+  };
+
+  const handleUpdateSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingDebt || !editTitle.trim() || !editTotalAmount) return;
+
+    const total = parseFloat(editTotalAmount);
+    const paid = parseFloat(editPaidAmount) || 0;
+    const finalStatus = editStatus || (paid >= total ? 'completed' : 'active');
+
+    await onUpdateDebt(editingDebt.id, {
+      title: editTitle.trim(),
+      type: editType,
+      counterparty: editCounterparty.trim() || undefined,
+      total_amount: total,
+      paid_amount: paid,
+      due_date: editDueDate || undefined,
+      interest_rate: parseFloat(editInterestRate) || 0,
+      notes: editNotes.trim() || undefined,
+      status: finalStatus,
+    });
+    setEditingDebt(null);
   };
 
   return (
@@ -191,6 +238,13 @@ export const DebtsView: React.FC<DebtsViewProps> = ({
                         <span>Record Taka In / Repayment</span>
                       </button>
                     )}
+                    <button
+                      onClick={() => handleOpenEdit(d)}
+                      className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                      title="Edit Entry"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
                     <button
                       onClick={() => {
                         if (confirm(`Delete debt entry: ${d.title}?`)) {
@@ -392,6 +446,159 @@ export const DebtsView: React.FC<DebtsViewProps> = ({
                   className="px-5 py-2 rounded-lg text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 shadow-sm"
                 >
                   Save Entry
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Debt Modal */}
+      {editingDebt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-100">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+              <h2 className="text-lg font-bold text-slate-900">Edit Loan / Receivable</h2>
+              <button
+                onClick={() => setEditingDebt(null)}
+                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdateSave} className="p-6 space-y-4">
+              <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 rounded-xl">
+                <button
+                  type="button"
+                  onClick={() => setEditType('they_owe_me')}
+                  className={`py-2 rounded-lg text-xs font-semibold ${
+                    editType === 'they_owe_me' ? 'bg-emerald-500 text-white shadow-xs' : 'text-slate-600'
+                  }`}
+                >
+                  Owed to Me (Receivable)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditType('i_owe')}
+                  className={`py-2 rounded-lg text-xs font-semibold ${
+                    editType === 'i_owe' ? 'bg-rose-500 text-white shadow-xs' : 'text-slate-600'
+                  }`}
+                >
+                  I Owe Money (Liability)
+                </button>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
+                  Title / Description
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Loan to Pulsecode, Loan to Rifat"
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  className="w-full px-3.5 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
+                  Counterparty (Person or Business)
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Pulsecode, Rifat"
+                  value={editCounterparty}
+                  onChange={(e) => setEditCounterparty(e.target.value)}
+                  className="w-full px-3.5 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
+                    Total Amount ({currency})
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    required
+                    placeholder="0.00"
+                    value={editTotalAmount}
+                    onChange={(e) => setEditTotalAmount(e.target.value)}
+                    className="w-full px-3.5 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-semibold"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
+                    Paid / Received ({currency})
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    placeholder="0.00"
+                    value={editPaidAmount}
+                    onChange={(e) => setEditPaidAmount(e.target.value)}
+                    className="w-full px-3.5 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
+                    Due Date (Optional)
+                  </label>
+                  <input
+                    type="date"
+                    value={editDueDate}
+                    onChange={(e) => setEditDueDate(e.target.value)}
+                    className="w-full px-3.5 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
+                    Status
+                  </label>
+                  <select
+                    value={editStatus}
+                    onChange={(e) => setEditStatus(e.target.value as 'active' | 'completed')}
+                    className="w-full px-3.5 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm bg-white"
+                  >
+                    <option value="active">Active</option>
+                    <option value="completed">Completed / Settled</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
+                  Notes
+                </label>
+                <textarea
+                  rows={2}
+                  placeholder="Details, dates, terms..."
+                  value={editNotes}
+                  onChange={(e) => setEditNotes(e.target.value)}
+                  className="w-full px-3.5 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                />
+              </div>
+
+              <div className="flex items-center justify-end space-x-3 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setEditingDebt(null)}
+                  className="px-4 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-lg text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 shadow-sm"
+                >
+                  Save Changes
                 </button>
               </div>
             </form>
