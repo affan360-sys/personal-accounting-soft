@@ -5,6 +5,7 @@ import {
   Download, 
   Upload, 
   Trash2, 
+  Pencil,
   ArrowUpRight, 
   ArrowDownRight, 
   ArrowLeftRight
@@ -12,6 +13,7 @@ import {
 import { Transaction, Account, Category } from '../types';
 import { importCSV } from '../api';
 import { useCurrency } from '../context/CurrencyContext';
+import { EditTransactionModal } from './EditTransactionModal';
 
 interface TransactionsViewProps {
   transactions: Transaction[];
@@ -29,6 +31,7 @@ interface TransactionsViewProps {
   onRefresh: () => void;
   onOpenNewTransaction: () => void;
   onDeleteTransaction: (id: number) => Promise<void>;
+  onUpdateTransaction: (id: number, data: Partial<Transaction>) => Promise<void>;
 }
 
 export const TransactionsView: React.FC<TransactionsViewProps> = ({
@@ -47,9 +50,11 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
   onRefresh,
   onOpenNewTransaction,
   onDeleteTransaction,
+  onUpdateTransaction,
 }) => {
   const { currency, formatAmount } = useCurrency();
   const [isUploading, setIsUploading] = useState(false);
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
 
   const handleExportCSV = () => {
     window.open('/api/export/csv', '_blank');
@@ -263,17 +268,26 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
                         {isIncome ? '+' : isExpense ? '-' : ''}{formatAmount(t.amount)}
                       </td>
                       <td className="py-3 px-4 text-center whitespace-nowrap">
-                        <button
-                          onClick={() => {
-                            if (confirm('Delete this transaction?')) {
-                              onDeleteTransaction(t.id);
-                            }
-                          }}
-                          className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors"
-                          title="Delete Transaction"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        <div className="flex items-center justify-center space-x-1">
+                          <button
+                            onClick={() => setEditingTransaction(t)}
+                            className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            title="Edit Transaction"
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => {
+                              if (confirm('Delete this transaction?')) {
+                                onDeleteTransaction(t.id);
+                              }
+                            }}
+                            className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                            title="Delete Transaction"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -289,6 +303,16 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
           </table>
         </div>
       </div>
+
+      {/* Edit Transaction Modal */}
+      <EditTransactionModal
+        isOpen={!!editingTransaction}
+        onClose={() => setEditingTransaction(null)}
+        transaction={editingTransaction}
+        accounts={accounts}
+        categories={categories}
+        onSave={onUpdateTransaction}
+      />
     </div>
   );
 };

@@ -36,6 +36,7 @@ import {
   fetchCategories,
   fetchTransactions,
   createTransaction,
+  updateTransaction,
   deleteTransaction,
   fetchBudgets,
   saveBudget,
@@ -250,6 +251,11 @@ function MainApp() {
     await loadAllData();
   };
 
+  const handleUpdateTransaction = async (id: number, data: Partial<Transaction>) => {
+    await updateTransaction(id, data);
+    await loadAllData();
+  };
+
   // Account Actions
   const handleCreateAccount = async (data: Partial<Account>) => {
     await createAccount(data);
@@ -356,6 +362,7 @@ function MainApp() {
             onRefresh={loadTransactions}
             onOpenNewTransaction={() => setIsTxModalOpen(true)}
             onDeleteTransaction={handleDeleteTransaction}
+            onUpdateTransaction={handleUpdateTransaction}
           />
         )}
 
