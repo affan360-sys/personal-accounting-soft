@@ -1,4 +1,5 @@
 import { Account, Category, Transaction, Budget, DebtGoal, FinancialSummary, MonthlyTrend, CategoryBreakdown } from './types';
+import { getSupabase } from './supabase';
 
 const BASE_URL = '/api';
 
@@ -129,6 +130,17 @@ function recalculateLocalAccountBalances() {
   }
 
   setLocal('affan_accounts', accounts);
+}
+
+async function syncSupabaseBalances() {
+  const sb = getSupabase();
+  if (!sb) return;
+  try {
+    const accounts = getLocal<Account[]>('affan_accounts', INITIAL_ACCOUNTS);
+    for (const a of accounts) {
+      await sb.from('accounts').update({ current_balance: a.current_balance }).eq('id', a.id);
+    }
+  } catch {}
 }
 
 function computeLocalSummary(): FinancialSummary {
@@ -277,6 +289,17 @@ export async function fetchCashflow(days = 30): Promise<{ date: string; income: 
 
 // --- Accounts ---
 export async function fetchAccounts(): Promise<Account[]> {
+  const sb = getSupabase();
+  if (sb) {
+    try {
+      const { data, error } = await sb.from('accounts').select('*').order('id');
+      if (!error && Array.isArray(data) && data.length > 0) {
+        setLocal('affan_accounts', data);
+        return data as Account[];
+      }
+    } catch {}
+  }
+
   try {
     const res = await fetch(`${BASE_URL}/accounts`);
     if (res.ok) {
@@ -291,16 +314,6 @@ export async function fetchAccounts(): Promise<Account[]> {
 }
 
 export async function createAccount(data: Partial<Account>): Promise<Account> {
-  try {
-    const res = await fetch(`${BASE_URL}/accounts`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
-    if (res.ok) return await res.json();
-  } catch {}
-
-  const accounts = getLocal<Account[]>('affan_accounts', INITIAL_ACCOUNTS);
   const newAccount: Account = {
     id: Date.now(),
     name: data.name || 'New Account',
@@ -315,12 +328,42 @@ export async function createAccount(data: Partial<Account>): Promise<Account> {
     created_at: new Date().toISOString(),
   };
 
+  const sb = getSupabase();
+  if (sb) {
+    try {
+      const { data: created, error } = await sb.from('accounts').insert(newAccount).select().single();
+      if (!error && created) {
+        const accounts = getLocal<Account[]>('affan_accounts', INITIAL_ACCOUNTS);
+        accounts.push(created as Account);
+        setLocal('affan_accounts', accounts);
+        return created as Account;
+      }
+    } catch {}
+  }
+
+  try {
+    const res = await fetch(`${BASE_URL}/accounts`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (res.ok) return await res.json();
+  } catch {}
+
+  const accounts = getLocal<Account[]>('affan_accounts', INITIAL_ACCOUNTS);
   accounts.push(newAccount);
   setLocal('affan_accounts', accounts);
   return newAccount;
 }
 
 export async function updateAccount(id: number, data: Partial<Account>): Promise<Account> {
+  const sb = getSupabase();
+  if (sb) {
+    try {
+      await sb.from('accounts').update(data).eq('id', id);
+    } catch {}
+  }
+
   try {
     const res = await fetch(`${BASE_URL}/accounts/${id}`, {
       method: 'PUT',
@@ -342,6 +385,13 @@ export async function updateAccount(id: number, data: Partial<Account>): Promise
 }
 
 export async function deleteAccount(id: number): Promise<void> {
+  const sb = getSupabase();
+  if (sb) {
+    try {
+      await sb.from('accounts').delete().eq('id', id);
+    } catch {}
+  }
+
   try {
     await fetch(`${BASE_URL}/accounts/${id}`, { method: 'DELETE' });
   } catch {}
@@ -352,6 +402,19 @@ export async function deleteAccount(id: number): Promise<void> {
 
 // --- Categories ---
 export async function fetchCategories(type?: string): Promise<Category[]> {
+  const sb = getSupabase();
+  if (sb) {
+    try {
+      let q = sb.from('categories').select('*').order('id');
+      if (type) q = q.eq('type', type);
+      const { data, error } = await q;
+      if (!error && Array.isArray(data) && data.length > 0) {
+        setLocal('affan_categories', data);
+        return data as Category[];
+      }
+    } catch {}
+  }
+
   try {
     const url = type ? `${BASE_URL}/categories?type=${type}` : `${BASE_URL}/categories`;
     const res = await fetch(url);
@@ -369,6 +432,27 @@ export async function fetchCategories(type?: string): Promise<Category[]> {
 }
 
 export async function createCategory(data: Partial<Category>): Promise<Category> {
+  const newCat: Category = {
+    id: Date.now(),
+    name: data.name || 'New Category',
+    type: (data.type as any) || 'expense',
+    icon: data.icon || 'tag',
+    color: data.color || '#10b981',
+  };
+
+  const sb = getSupabase();
+  if (sb) {
+    try {
+      const { data: created, error } = await sb.from('categories').insert(newCat).select().single();
+      if (!error && created) {
+        const categories = getLocal<Category[]>('affan_categories', INITIAL_CATEGORIES);
+        categories.push(created as Category);
+        setLocal('affan_categories', categories);
+        return created as Category;
+      }
+    } catch {}
+  }
+
   try {
     const res = await fetch(`${BASE_URL}/categories`, {
       method: 'POST',
@@ -379,19 +463,19 @@ export async function createCategory(data: Partial<Category>): Promise<Category>
   } catch {}
 
   const categories = getLocal<Category[]>('affan_categories', INITIAL_CATEGORIES);
-  const newCat: Category = {
-    id: Date.now(),
-    name: data.name || 'New Category',
-    type: (data.type as any) || 'expense',
-    icon: data.icon || 'tag',
-    color: data.color || '#10b981',
-  };
   categories.push(newCat);
   setLocal('affan_categories', categories);
   return newCat;
 }
 
 export async function deleteCategory(id: number): Promise<void> {
+  const sb = getSupabase();
+  if (sb) {
+    try {
+      await sb.from('categories').delete().eq('id', id);
+    } catch {}
+  }
+
   try {
     await fetch(`${BASE_URL}/categories/${id}`, { method: 'DELETE' });
   } catch {}
@@ -411,6 +495,31 @@ export async function fetchTransactions(params: {
   limit?: number;
   offset?: number;
 } = {}): Promise<{ items: Transaction[]; total: number }> {
+  const sb = getSupabase();
+  if (sb) {
+    try {
+      let q = sb.from('transactions').select('*', { count: 'exact' });
+      if (params.account_id) q = q.or(`account_id.eq.${params.account_id},to_account_id.eq.${params.account_id}`);
+      if (params.category_id) q = q.eq('category_id', params.category_id);
+      if (params.type) q = q.eq('type', params.type);
+      if (params.start_date) q = q.gte('date', params.start_date);
+      if (params.end_date) q = q.lte('date', params.end_date);
+      if (params.search) q = q.or(`payee.ilike.%${params.search}%,notes.ilike.%${params.search}%`);
+
+      const offset = params.offset || 0;
+      const limit = params.limit || 100;
+      q = q.order('date', { ascending: false }).order('id', { ascending: false }).range(offset, offset + limit - 1);
+
+      const { data, count, error } = await q;
+      if (!error && Array.isArray(data)) {
+        if (offset === 0 && !params.search && !params.account_id && !params.category_id && !params.type) {
+          setLocal('affan_transactions', data);
+        }
+        return { items: data as Transaction[], total: count ?? data.length };
+      }
+    } catch {}
+  }
+
   try {
     const query = new URLSearchParams();
     if (params.account_id) query.append('account_id', params.account_id.toString());
@@ -449,20 +558,6 @@ export async function fetchTransactions(params: {
 }
 
 export async function createTransaction(data: Partial<Transaction>): Promise<Transaction> {
-  try {
-    const res = await fetch(`${BASE_URL}/transactions`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
-    if (res.ok) {
-      const tx = await res.json();
-      if (tx && tx.id) return tx;
-    }
-  } catch {}
-
-  // Fallback to local storage (e.g. on Vercel without active backend)
-  const txs = getLocal<Transaction[]>('affan_transactions', INITIAL_TRANSACTIONS);
   const accounts = getLocal<Account[]>('affan_accounts', INITIAL_ACCOUNTS);
   const categories = getLocal<Category[]>('affan_categories', INITIAL_CATEGORIES);
 
@@ -486,6 +581,34 @@ export async function createTransaction(data: Partial<Transaction>): Promise<Tra
     to_account_name: toAcc?.name,
   };
 
+  const sb = getSupabase();
+  if (sb) {
+    try {
+      const { data: created, error } = await sb.from('transactions').insert(newTx).select().single();
+      if (!error && created) {
+        const txs = getLocal<Transaction[]>('affan_transactions', INITIAL_TRANSACTIONS);
+        txs.unshift(created as Transaction);
+        setLocal('affan_transactions', txs);
+        recalculateLocalAccountBalances();
+        syncSupabaseBalances();
+        return created as Transaction;
+      }
+    } catch {}
+  }
+
+  try {
+    const res = await fetch(`${BASE_URL}/transactions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (res.ok) {
+      const tx = await res.json();
+      if (tx && tx.id) return tx;
+    }
+  } catch {}
+
+  const txs = getLocal<Transaction[]>('affan_transactions', INITIAL_TRANSACTIONS);
   txs.unshift(newTx);
   setLocal('affan_transactions', txs);
   recalculateLocalAccountBalances();
@@ -494,6 +617,14 @@ export async function createTransaction(data: Partial<Transaction>): Promise<Tra
 }
 
 export async function updateTransaction(id: number, data: Partial<Transaction>): Promise<Transaction> {
+  const sb = getSupabase();
+  if (sb) {
+    try {
+      await sb.from('transactions').update(data).eq('id', id);
+      syncSupabaseBalances();
+    } catch {}
+  }
+
   try {
     const res = await fetch(`${BASE_URL}/transactions/${id}`, {
       method: 'PUT',
@@ -515,6 +646,14 @@ export async function updateTransaction(id: number, data: Partial<Transaction>):
 }
 
 export async function deleteTransaction(id: number): Promise<void> {
+  const sb = getSupabase();
+  if (sb) {
+    try {
+      await sb.from('transactions').delete().eq('id', id);
+      syncSupabaseBalances();
+    } catch {}
+  }
+
   try {
     await fetch(`${BASE_URL}/transactions/${id}`, { method: 'DELETE' });
   } catch {}
@@ -526,6 +665,36 @@ export async function deleteTransaction(id: number): Promise<void> {
 
 // --- Budgets ---
 export async function fetchBudgets(month?: string): Promise<Budget[]> {
+  const sb = getSupabase();
+  if (sb) {
+    try {
+      const { data, error } = await sb.from('budgets').select('*');
+      if (!error && Array.isArray(data)) {
+        const categories = getLocal<Category[]>('affan_categories', INITIAL_CATEGORIES);
+        const txs = getLocal<Transaction[]>('affan_transactions', INITIAL_TRANSACTIONS);
+        const now = new Date();
+        const curMonth = month || `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+        const enriched: Budget[] = data.map((b) => {
+          const spent = txs
+            .filter((t) => t.category_id === b.category_id && t.type === 'expense' && t.date && t.date.startsWith(curMonth))
+            .reduce((s, t) => s + t.amount, 0);
+          return {
+            id: b.id,
+            category_id: b.category_id,
+            amount: Number(b.amount),
+            period: b.period || 'monthly',
+            spent,
+            remaining: Math.max(0, Number(b.amount) - spent),
+            percentage: Number(b.amount) > 0 ? (spent / Number(b.amount)) * 100 : 0,
+            category: categories.find((c) => c.id === b.category_id),
+          };
+        });
+        setLocal('affan_budgets', enriched);
+        return enriched;
+      }
+    } catch {}
+  }
+
   try {
     const url = month ? `${BASE_URL}/budgets?month=${month}` : `${BASE_URL}/budgets`;
     const res = await fetch(url);
@@ -538,6 +707,18 @@ export async function fetchBudgets(month?: string): Promise<Budget[]> {
 }
 
 export async function saveBudget(data: { category_id: number; amount: number; period?: string }): Promise<Budget> {
+  const sb = getSupabase();
+  if (sb) {
+    try {
+      await sb.from('budgets').upsert({
+        id: Date.now(),
+        category_id: data.category_id,
+        amount: Number(data.amount),
+        period: data.period || 'monthly',
+      }, { onConflict: 'category_id' });
+    } catch {}
+  }
+
   try {
     const res = await fetch(`${BASE_URL}/budgets`, {
       method: 'POST',
@@ -566,6 +747,13 @@ export async function saveBudget(data: { category_id: number; amount: number; pe
 }
 
 export async function deleteBudget(id: number): Promise<void> {
+  const sb = getSupabase();
+  if (sb) {
+    try {
+      await sb.from('budgets').delete().eq('id', id);
+    } catch {}
+  }
+
   try {
     await fetch(`${BASE_URL}/budgets/${id}`, { method: 'DELETE' });
   } catch {}
@@ -576,6 +764,17 @@ export async function deleteBudget(id: number): Promise<void> {
 
 // --- Debts / Loans ---
 export async function fetchDebts(): Promise<DebtGoal[]> {
+  const sb = getSupabase();
+  if (sb) {
+    try {
+      const { data, error } = await sb.from('debt_goals').select('*').order('id');
+      if (!error && Array.isArray(data)) {
+        setLocal('affan_debts', data);
+        return data as DebtGoal[];
+      }
+    } catch {}
+  }
+
   try {
     const res = await fetch(`${BASE_URL}/debts`);
     if (res.ok) {
@@ -590,19 +789,6 @@ export async function fetchDebts(): Promise<DebtGoal[]> {
 }
 
 export async function createDebt(data: Partial<DebtGoal>): Promise<DebtGoal> {
-  try {
-    const res = await fetch(`${BASE_URL}/debts`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
-    if (res.ok) {
-      const debt = await res.json();
-      if (debt && debt.id) return debt;
-    }
-  } catch {}
-
-  const debts = getLocal<DebtGoal[]>('affan_debts', INITIAL_DEBTS);
   const newDebt: DebtGoal = {
     id: Date.now(),
     title: data.title || 'Loan / Debt',
@@ -618,12 +804,45 @@ export async function createDebt(data: Partial<DebtGoal>): Promise<DebtGoal> {
     created_at: new Date().toISOString(),
   };
 
+  const sb = getSupabase();
+  if (sb) {
+    try {
+      const { data: created, error } = await sb.from('debt_goals').insert(newDebt).select().single();
+      if (!error && created) {
+        const debts = getLocal<DebtGoal[]>('affan_debts', INITIAL_DEBTS);
+        debts.push(created as DebtGoal);
+        setLocal('affan_debts', debts);
+        return created as DebtGoal;
+      }
+    } catch {}
+  }
+
+  try {
+    const res = await fetch(`${BASE_URL}/debts`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (res.ok) {
+      const debt = await res.json();
+      if (debt && debt.id) return debt;
+    }
+  } catch {}
+
+  const debts = getLocal<DebtGoal[]>('affan_debts', INITIAL_DEBTS);
   debts.push(newDebt);
   setLocal('affan_debts', debts);
   return newDebt;
 }
 
 export async function updateDebt(id: number, data: Partial<DebtGoal>): Promise<DebtGoal> {
+  const sb = getSupabase();
+  if (sb) {
+    try {
+      await sb.from('debt_goals').update(data).eq('id', id);
+    } catch {}
+  }
+
   try {
     const res = await fetch(`${BASE_URL}/debts/${id}`, {
       method: 'PUT',
@@ -647,12 +866,133 @@ export async function updateDebt(id: number, data: Partial<DebtGoal>): Promise<D
 }
 
 export async function deleteDebt(id: number): Promise<void> {
+  const sb = getSupabase();
+  if (sb) {
+    try {
+      await sb.from('debt_goals').delete().eq('id', id);
+    } catch {}
+  }
+
   try {
     await fetch(`${BASE_URL}/debts/${id}`, { method: 'DELETE' });
   } catch {}
 
   const debts = getLocal<DebtGoal[]>('affan_debts', INITIAL_DEBTS).filter((d) => d.id !== id);
   setLocal('affan_debts', debts);
+}
+
+// Push current local device storage to Supabase
+export async function pushLocalDataToSupabase(): Promise<{ ok: boolean; message: string }> {
+  const sb = getSupabase();
+  if (!sb) {
+    return { ok: false, message: 'Supabase is not connected. Enter your URL and Key.' };
+  }
+
+  try {
+    const accounts = getLocal<Account[]>('affan_accounts', INITIAL_ACCOUNTS);
+    const categories = getLocal<Category[]>('affan_categories', INITIAL_CATEGORIES);
+    const txs = getLocal<Transaction[]>('affan_transactions', INITIAL_TRANSACTIONS);
+    const budgets = getLocal<Budget[]>('affan_budgets', []);
+    const debts = getLocal<DebtGoal[]>('affan_debts', INITIAL_DEBTS);
+
+    if (categories.length > 0) {
+      const { error } = await sb.from('categories').upsert(
+        categories.map((c) => ({
+          id: c.id,
+          name: c.name,
+          type: c.type,
+          icon: c.icon,
+          color: c.color,
+        })),
+        { onConflict: 'id' }
+      );
+      if (error) throw error;
+    }
+
+    if (accounts.length > 0) {
+      const { error } = await sb.from('accounts').upsert(
+        accounts.map((a) => ({
+          id: a.id,
+          name: a.name,
+          type: a.type,
+          initial_balance: a.initial_balance,
+          current_balance: a.current_balance,
+          currency: a.currency,
+          icon: a.icon,
+          color: a.color,
+          is_liability: a.is_liability,
+          notes: a.notes,
+          created_at: a.created_at,
+        })),
+        { onConflict: 'id' }
+      );
+      if (error) throw error;
+    }
+
+    if (txs.length > 0) {
+      const { error } = await sb.from('transactions').upsert(
+        txs.map((t) => ({
+          id: t.id,
+          account_id: t.account_id,
+          category_id: t.category_id || null,
+          to_account_id: t.to_account_id || null,
+          type: t.type,
+          amount: t.amount,
+          date: t.date,
+          payee: t.payee,
+          notes: t.notes,
+          account_name: t.account_name,
+          category_name: t.category_name,
+          to_account_name: t.to_account_name,
+          created_at: t.created_at,
+        })),
+        { onConflict: 'id' }
+      );
+      if (error) throw error;
+    }
+
+    if (budgets.length > 0) {
+      const { error } = await sb.from('budgets').upsert(
+        budgets.map((b) => ({
+          id: b.id,
+          category_id: b.category_id,
+          amount: b.amount,
+          period: b.period || 'monthly',
+        })),
+        { onConflict: 'category_id' }
+      );
+      if (error) throw error;
+    }
+
+    if (debts.length > 0) {
+      const { error } = await sb.from('debt_goals').upsert(
+        debts.map((d) => ({
+          id: d.id,
+          title: d.title,
+          type: d.type,
+          counterparty: d.counterparty,
+          total_amount: d.total_amount,
+          paid_amount: d.paid_amount,
+          loan_date: d.loan_date,
+          due_date: d.due_date,
+          interest_rate: d.interest_rate,
+          notes: d.notes,
+          status: d.status,
+          created_at: d.created_at,
+        })),
+        { onConflict: 'id' }
+      );
+      if (error) throw error;
+    }
+
+    return {
+      ok: true,
+      message: `Synced ${accounts.length} accounts, ${txs.length} transactions, ${budgets.length} budgets, and ${debts.length} debt goals!`,
+    };
+  } catch (err: any) {
+    console.error('Supabase sync error:', err);
+    return { ok: false, message: err.message || 'Failed to sync to Supabase' };
+  }
 }
 
 export async function resetSeedData(): Promise<void> {

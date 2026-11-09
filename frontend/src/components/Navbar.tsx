@@ -9,16 +9,19 @@ import {
   PlusCircle, 
   RotateCcw,
   ShieldCheck,
-  Bell
+  Bell,
+  Cloud
 } from 'lucide-react';
 import { FinancialSummary } from '../types';
 import { useCurrency } from '../context/CurrencyContext';
+import { isSupabaseConfigured } from '../supabase';
 
 interface NavbarProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
   onOpenNewTransaction: () => void;
   onOpenNotificationSettings: () => void;
+  onOpenCloudSync: () => void;
   onResetData: () => void;
   summary: FinancialSummary | null;
 }
@@ -28,10 +31,12 @@ export const Navbar: React.FC<NavbarProps> = ({
   setActiveTab,
   onOpenNewTransaction,
   onOpenNotificationSettings,
+  onOpenCloudSync,
   onResetData,
   summary,
 }) => {
   const { currency, setCurrency, formatAmount } = useCurrency();
+  const isCloudSynced = isSupabaseConfigured();
 
   const tabs = [
     { id: 'overview', label: 'Dashboard', icon: LayoutDashboard },
@@ -113,6 +118,15 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </span>
               </div>
             )}
+
+            <button
+              onClick={onOpenCloudSync}
+              title={isCloudSynced ? "Supabase Cloud Connected (Live Sync)" : "Cloud Sync (Offline / Local Storage)"}
+              className="relative p-2 text-slate-500 hover:text-blue-600 hover:bg-slate-100 rounded-lg transition-colors border border-slate-200"
+            >
+              <Cloud className="w-4 h-4" />
+              <span className={`absolute top-1 right-1 w-2 h-2 rounded-full ring-2 ring-white ${isCloudSynced ? 'bg-emerald-500' : 'bg-amber-400'}`}></span>
+            </button>
 
             <button
               onClick={onOpenNotificationSettings}

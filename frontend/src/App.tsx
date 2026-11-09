@@ -9,6 +9,7 @@ import { AnalyticsView } from './components/AnalyticsView';
 import { TransactionModal } from './components/TransactionModal';
 import { NotificationBanner } from './components/NotificationBanner';
 import { NotificationModal } from './components/NotificationModal';
+import { CloudSyncModal } from './components/CloudSyncModal';
 import { 
   getNotificationSettings, 
   saveNotificationSettings, 
@@ -71,6 +72,7 @@ function MainApp() {
   // Modals & Notifications
   const [isTxModalOpen, setIsTxModalOpen] = useState<boolean>(false);
   const [isNotificationModalOpen, setIsNotificationModalOpen] = useState<boolean>(false);
+  const [isCloudSyncOpen, setIsCloudSyncOpen] = useState<boolean>(false);
   const [showNotificationBanner, setShowNotificationBanner] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
 
@@ -319,6 +321,7 @@ function MainApp() {
         setActiveTab={setActiveTab}
         onOpenNewTransaction={() => setIsTxModalOpen(true)}
         onOpenNotificationSettings={() => setIsNotificationModalOpen(true)}
+        onOpenCloudSync={() => setIsCloudSyncOpen(true)}
         onResetData={handleResetData}
         summary={summary}
       />
@@ -409,6 +412,13 @@ function MainApp() {
         isOpen={isNotificationModalOpen}
         onClose={() => setIsNotificationModalOpen(false)}
         onTestNotification={() => setShowNotificationBanner(true)}
+      />
+
+      {/* Cloud Sync (Supabase) Modal */}
+      <CloudSyncModal
+        isOpen={isCloudSyncOpen}
+        onClose={() => setIsCloudSyncOpen(false)}
+        onSyncComplete={loadAllData}
       />
     </div>
   );
