@@ -92,7 +92,7 @@ export const TransactionsView: React.FC<TransactionsViewProps> = ({
         </div>
 
         {/* Action buttons */}
-        <div className="flex items-center space-x-2.5">
+        <div className="flex flex-wrap items-center gap-2">
           <label className="flex items-center space-x-1.5 px-3 py-2 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl text-xs font-semibold cursor-pointer shadow-xs transition-colors">
             <Upload className="w-3.5 h-3.5 text-slate-500" />
             <span>{isUploading ? 'Importing...' : 'Import CSV'}</span>

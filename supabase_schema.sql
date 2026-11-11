@@ -76,3 +76,4 @@ ALTER TABLE public.budgets DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.debt_goals DISABLE ROW LEVEL SECURITY;
 
 -- Done! Your Supabase database is ready to sync live with Phone & Windows.
+

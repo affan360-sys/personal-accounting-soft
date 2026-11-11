@@ -207,7 +207,7 @@ export const Overview: React.FC<OverviewProps> = ({
       {/* Main Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Income vs Expenses Bar Chart (2 Cols) */}
-        <div className="lg:col-span-2 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs">
+        <div className="lg:col-span-2 min-w-0 bg-white p-4 sm:p-6 rounded-2xl border border-slate-200/80 shadow-xs">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-base font-bold text-slate-900">Monthly Cash Velocity</h2>
@@ -240,7 +240,7 @@ export const Overview: React.FC<OverviewProps> = ({
         </div>
 
         {/* Category Spending Donut Chart (1 Col) */}
-        <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between">
+        <div className="min-w-0 bg-white p-4 sm:p-6 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-4">
               <div>
@@ -298,7 +298,7 @@ export const Overview: React.FC<OverviewProps> = ({
       {/* Bottom Grid: Accounts + Recent Transactions */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Account Balances Summary (1 Col) */}
-        <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs">
+        <div className="min-w-0 bg-white p-4 sm:p-6 rounded-2xl border border-slate-200/80 shadow-xs">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-base font-bold text-slate-900 flex items-center space-x-2">
               <Wallet className="w-4 h-4 text-blue-600" />
@@ -344,7 +344,7 @@ export const Overview: React.FC<OverviewProps> = ({
         </div>
 
         {/* Recent Transactions List (2 Cols) */}
-        <div className="lg:col-span-2 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs">
+        <div className="lg:col-span-2 min-w-0 bg-white p-4 sm:p-6 rounded-2xl border border-slate-200/80 shadow-xs">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-base font-bold text-slate-900">Recorded Transactions</h2>
             <button

@@ -315,7 +315,7 @@ function MainApp() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col font-sans">
+    <div className="min-h-screen bg-slate-50 flex flex-col font-sans overflow-x-hidden w-full">
       <Navbar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -326,7 +326,7 @@ function MainApp() {
         summary={summary}
       />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="flex-1 max-w-7xl w-full min-w-0 mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8">
         {activeTab === 'overview' && (
           <Overview
             summary={summary}
